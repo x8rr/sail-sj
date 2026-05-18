@@ -9,3 +9,6 @@ A Scramjet example with batteries included.
 - Minimal HTML template
 
 Feel free to switch out the transport, SW, and Wisp at will.
+
+## How to set it up
+Please follow [the tutorial](TUTORIAL.md) to set Scramjet up on your website.
