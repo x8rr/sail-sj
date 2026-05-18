@@ -1,88 +1,163 @@
-# Scramjet Tutorial
-Welcome! I'll show you how to set up Scramjet on your website with the files in this repository. Follow the steps below.
+# Scramjet Setup Guide
 
-## Using Static Languages
+This guide explains how to integrate Scramjet into a static site or a frontend framework project using the `sail-sj` repository.
 
-### Getting Started
-First, navigate into your development folder
-```bash
-cd folder-name
+---
+
+# Requirements
+
+Before starting, ensure you have:
+
+* A modern browser (Chromium-based recommended)
+* A local development server (Vite, Next.js, http-server, etc.)
+* HTTPS or localhost (required for Service Workers)
+* Git installed
+
+---
+
+# Repository Overview
+
+After setup, your project should contain:
+
+```
+your-project/
+├── index.html
+├── sw.js
+├── baremux/
+│   └── worker.js
+├── scramjet/
+│   └── scramjet.all.js
+├── libcurl/
+│   └── index.mjs
 ```
 
-Next, clone these files into your directory
+---
+
+# Installation
+
+## 1. Clone the repository
+
 ```bash
+cd your-project
 git clone https://github.com/x8rr/sail-sj
 ```
 
-Then, move everything in the new folder into your directory, except git. You can then delete the folder.
+---
+
+## 2. Copy required files
+
+From `sail-sj/sail/`, copy into your project root (or public directory if using a framework):
+
+### Static site setup
+
 ```bash
-mv sail-sj/sail/baremux ./
-mv sail-sj/sail/scramjet ./
-mv sail-sj/sail/libcurl ./
-mv sail-sj/sw.js ./
-mv sail-sj/index.html ./
+cp -r sail-sj/sail/baremux ./
+cp -r sail-sj/sail/scramjet ./
+cp -r sail-sj/sail/libcurl ./
+cp sail-sj/sw.js ./
+cp sail-sj/index.html ./
 rm -rf sail-sj
 ```
 
-### Setting it Up
-Navigate to `index.html` in your directory (the cloned version), and look for each script import. They should look like ``<script src="/path/to/file/"></script>``. Make sure you correct each path to where the files actually are!
+### Framework setup (React, Vite, etc.)
 
-Next, go to `sw.js` and also change your script imports. This is very important, or it will not work.
+Copy into your public directory:
 
-Make sure you also changed the imports for BareMux, Libcurl, and Scramjet. They are in an inline `<script>` tag at the end of the file.
-
-## Using a framework (like React)
-Using a framework with this repository is very simple!
-
-### Getting started
-First, navigate into your development folder
 ```bash
-cd folder-name
-```
-
-Next, clone these files into your directory
-```bash
-git clone https://github.com/x8rr/sail-sj
-```
-
-Then, move everything in the new folder into your **PUBLIC** directory, except git. You can then delete the folder.
-```bash
-mv sail-sj/sail/baremux ./public
-mv sail-sj/sail/scramjet ./public
-mv sail-sj/sail/libcurl ./public
-mv sail-sj/sw.js ./public
-mv sail-sj/index.html ./public
+cp -r sail-sj/sail/baremux ./public/
+cp -r sail-sj/sail/scramjet ./public/
+cp -r sail-sj/sail/libcurl ./public/
+cp sail-sj/sw.js ./public/
+cp sail-sj/index.html ./public/
 rm -rf sail-sj
 ```
 
-### Setting it up
-Then, navigate to `/index.html`, and add the following to your head:
+---
+
+# Configuration
+
+## 1. Fix script paths in `index.html`
+
+Open `index.html` and ensure all script paths match your final structure.
+
+Example:
+
 ```html
 <script src="/scramjet/scramjet.all.js"></script>
 <script src="/baremux/index.js"></script>
-<script>
-    navigator.serviceWorker.register("/sw.js")
-</script>
 ```
 
-**Make sure your paths match!**
+If you placed files in a subdirectory, update paths accordingly.
 
-Next, make sure you set up your BareMux controller.
+---
 
-Add this to the body of your HTML.
+## 2. Register Service Worker
+
+Add this inside `<head>` or at the end of `<body>`:
 
 ```html
 <script>
-    const connection = new BareMux.BareMuxConnection("/baremux/worker.js") // Make sure your path is correct!
-    connection.setTransport("/libcurl/index.mjs", [{ websocket: "wss://yourdomain.com/wisp/"}]) // Make sure your path is correct! Replace Wisp server in production.
+navigator.serviceWorker.register("/sw.js");
 </script>
 ```
 
-Now, you can encode URLs to navigate to them!
+### Important Notes
 
-### Scramjet Controller Config
-You can change the following properties on the Controller:
-```json
+* Must be served over HTTPS or `localhost`
+* Path must match actual file location
+* If registration fails, check browser console
+
+---
+
+## 3. Configure BareMux
+
+Add this inside `<body>`:
+
+```html
+<script>
+const connection = new BareMux.BareMuxConnection("/baremux/worker.js");
+
+connection.setTransport(
+  "/libcurl/index.mjs",
+  [{ websocket: "wss://YOUR_WISP_SERVER_HERE" }]
+);
+</script>
+```
+
+### Wisp Server
+
+Replace:
+
+```
+wss://YOUR_WISP_SERVER_HERE
+```
+
+with your deployed Wisp server endpoint.
+
+Example:
+
+```
+wss://wisp.example.com/
+```
+
+---
+
+# How Navigation Works
+
+Scramjet encodes URLs before navigation. You should use the Scramjet API exposed in the runtime environment:
+
+```js
+scramjet.codec.encode("https://example.com");
+scramjet.codec.decode(encodedUrl);
+```
+
+---
+
+# Scramjet Controller Configuration
+
+The Scramjet controller supports the following structure:
+
+```ts
 {
   prefix: string;
   globals: {
@@ -113,4 +188,70 @@ You can change the following properties on the Controller:
 }
 ```
 
-For more information about the Scramjet Controller, please read [here](https://mintlify.wiki/mercuryworkshop/scramjet/api/scramjet-controller).
+Documentation reference:
+[https://mintlify.wiki/mercuryworkshop/scramjet/api/scramjet-controller](https://mintlify.wiki/mercuryworkshop/scramjet/api/scramjet-controller)
+
+---
+
+# Framework Setup Notes
+
+## Vite / React / SPA frameworks
+
+Place all assets inside `public/`.
+
+Ensure:
+
+* `/sw.js` is accessible at root
+* `/baremux/`, `/scramjet/`, `/libcurl/` are publicly served
+* No bundler transforms these files
+
+### Example (Vite)
+
+```
+public/
+├── sw.js
+├── baremux/
+├── scramjet/
+├── libcurl/
+```
+
+---
+
+# Troubleshooting
+
+## Service worker does not register
+
+* Ensure HTTPS or localhost
+* Check correct path `/sw.js`
+* Open DevTools → Application → Service Workers
+
+---
+
+## Blank page or navigation not working
+
+* Verify script paths in `index.html`
+* Ensure Scramjet scripts are loading
+* Check console for missing imports
+
+---
+
+## BareMux fails to connect
+
+* Verify `/baremux/worker.js` exists
+* Confirm Wisp server is reachable
+* Check WebSocket URL (`wss://` required in production)
+
+---
+
+## Assets 404
+
+* Ensure correct public directory placement
+* Confirm server is serving static files correctly
+
+---
+
+# Production Notes
+
+* Always use HTTPS in production
+* Do not expose internal Wisp infrastructure publicly without protection
+* Keep Scramjet and BareMux versions consistent across updates
