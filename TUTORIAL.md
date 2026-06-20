@@ -91,39 +91,6 @@ If you placed files in a subdirectory, update paths accordingly.
 
 ---
 
-## 2. Register Service Worker
-
-Add this inside `<head>` or at the end of `<body>`:
-
-```html
-<script>
-navigator.serviceWorker.register("/sw.js");
-</script>
-```
-
-### Important Notes
-
-* Must be served over HTTPS or `localhost`
-* Path must match actual file location
-* If registration fails, check browser console
-
----
-
-## 3. Configure BareMux
-
-Add this inside `<body>`:
-
-```html
-<script>
-const connection = new BareMux.BareMuxConnection("/baremux/worker.js");
-
-connection.setTransport(
-  "/libcurl/index.mjs",
-  [{ websocket: "wss://YOUR_WISP_SERVER_HERE" }]
-);
-</script>
-```
-
 ### Wisp Server
 
 Replace:
@@ -147,8 +114,8 @@ wss://wisp.example.com/
 Scramjet encodes URLs before navigation. You should use the Scramjet API exposed in the runtime environment:
 
 ```js
-scramjet.codec.encode("https://example.com");
-scramjet.codec.decode(encodedUrl);
+scramjet.encodeUrl("https://example.com");
+scramjet.decodeUrl(encodedUrl);
 ```
 
 ---
