@@ -51,6 +51,7 @@ From `sail-sj/sail/`, copy into your project root (or public directory if using 
 ### Static site setup
 
 ```bash
+# These commands are for Unix based systems
 cp -r sail-sj/sail/baremux ./
 cp -r sail-sj/sail/scramjet ./
 cp -r sail-sj/sail/libcurl ./
@@ -58,6 +59,10 @@ cp sail-sj/sw.js ./
 cp sail-sj/index.html ./
 rm -rf sail-sj
 ```
+
+Then, update all paths inside `index.html` accordingly.
+
+For example, `<script src="/sail/scram/scramjet.all.js/">` should become `<script src="/scram/scramjet.all.js">`, or wherever you put your new Scramjet files. Make sure that ALL PATHS MATCH IN ALL FILES! This includes the Service Worker (sw.js).
 
 ### Framework setup (React, Vite, etc.)
 
@@ -88,6 +93,56 @@ Example:
 ```
 
 If you placed files in a subdirectory, update paths accordingly.
+
+
+## 2. Register Service Worker
+
+Add this inside `<head>` or at the end of `<body>`:
+
+```html
+<script>
+navigator.serviceWorker.register("/sw.js");
+</script>
+```
+
+### Important Notes
+
+* Must be served over HTTPS or `localhost`
+* Path must match actual file location
+* If registration fails, check browser console
+
+---
+
+## 3. Configure BareMux
+
+Add this inside `<body>`:
+
+```html
+<script>
+const connection = new BareMux.BareMuxConnection("/baremux/worker.js");
+
+connection.setTransport(
+  "/libcurl/index.mjs",
+  [{ websocket: "wss://YOUR_WISP_SERVER_HERE" }]
+);
+</script>
+```
+
+## 4. Initialize Scramjet
+```javascript
+// After BareMux init
+const { ScramjetController } = $scramjetLoadController()
+const scramjet = new ScramjetController({
+  files: {
+    all: pathtoall
+    wasm: pathtowasm
+    sync: pathtosync
+  },
+  prefix: "/prefix/here/" // this is optional
+}
+scramjet.init()
+```
+
 
 ---
 
