@@ -1,3 +1,6 @@
+This repository is outdated. Please see the updated repo for Scramjet v2 [here](https://github.com/x8rr/scramjet-templates)
+
+---
 # Sail SJ
 A Scramjet example with batteries included.
 
